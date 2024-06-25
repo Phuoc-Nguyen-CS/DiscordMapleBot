@@ -2,37 +2,47 @@ from bs4 import BeautifulSoup
 import requests
 
 session = requests.Session()
-character_name = 'aurelionsøl'
+# character_name = 'aurelionsøl'
 
 def getInfo(character_name):
+    """
+    Retrieves information related to character exp based on the ingame name.
+
+    Args:
+        character_name (str): The name of the character to look up.
+    
+    Returns:
+        dict: A dictionary containing details related to character.
+    """
     # Opens Page
     url = f'https://www.mapleranks.com/u/{character_name}'
-    print(url)
     response = requests.get(url)
 
     soup = BeautifulSoup(response.content, 'html.parser')
 
+    # Empty dictionary for information
+    character_info = {}
+
     # Finds current name
     name = soup.find('h3', class_='card-title text-nowrap')
-    name = name.text.strip()
-    print(name)
+    character_info['name'] = name = name.text.strip()
 
     # Finds current level and percent
     character_level = soup.find('h5', class_='card-text')
-    character_level = character_level.text.strip()
-    print(character_level)
+    character_info['level'] = character_level.text.strip()
 
     # Finds the exp
     exp_items = soup.find_all('div', class_='char-exp-cell')
-    for v in range(6):
-        label = exp_items[v].text.strip()
-        print(f'{label}')
+    character_info.update({f'exp_{v+1}': item.text.strip() for v, item in enumerate(exp_items)})
+
+    return character_info
         
 def main():
     session = requests.Session()
     # character_name = 'aurelionsøl'
     character_name = input('Name: ')
-    getInfo(character_name)
+    info = getInfo(character_name)
+    print(info)
 
 if __name__ == "__main__":
     main()
