@@ -4,7 +4,7 @@ import requests
 session = requests.Session()
 # character_name = 'aurelionsøl'
 
-def getInfo(character_name):
+def get_info(character_name):
     """
     Retrieves information related to character exp based on the ingame name.
 
@@ -23,19 +23,24 @@ def getInfo(character_name):
     # Empty dictionary for information
     character_info = {}
 
-    # Find picture
+    # Get picture
     url = soup.img['src']
     character_info['url'] = url
 
-    # Finds current name
+    # Get name
     name = soup.find('h3', class_='card-title text-nowrap')
     character_info['name'] = name.text.strip()
+    
+    # Get Class and World
+    class_world = soup.find('p', class_='card-text mb-0')
+    character_info['class_world'] = (class_world.text.strip())
 
-    # Finds current level and percent
+
+    # Get level
     character_level = soup.find('h5', class_='card-text')
     character_info['level'] = character_level.text.strip()
 
-    # Finds the exp
+    # Get average exp
     exp_items = soup.find_all('div', class_='char-exp-cell')
     # character_info.update({f'exp_{v+1}': item.text.strip() for v, item in enumerate(exp_items)})
     first_exp_value = exp_items[0].text.strip()
@@ -48,7 +53,7 @@ def main():
     session = requests.Session()
     # character_name = 'aurelionsøl'
     character_name = input('Name: ')
-    info = getInfo(character_name)
+    info = get_info(character_name)
     print(info)
 
 if __name__ == "__main__":

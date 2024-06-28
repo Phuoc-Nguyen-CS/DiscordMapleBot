@@ -1,4 +1,4 @@
-import mapleRanks
+import maple_ranks
 import discord
 from os import environ
 from discord.ext import commands
@@ -13,7 +13,7 @@ async def on_ready():
     print('---------------------')
 
 @client.command(name='exp')
-async def getExp(ctx, name):
+async def get_exp(ctx, name):
     '''
     A function in which once a command has been detected.
     Get data from mapleranks and display user exp and future progress here.
@@ -27,19 +27,19 @@ async def getExp(ctx, name):
     '''
     await ctx.message.delete()
     # Get information for character
-    info = mapleRanks.getInfo(name)
+    info = maple_ranks.get_info(name)
 
     # Create embed for display
     embed = discord.Embed(title=f"{info['name']}",
-                      description=f"{info['level']}")
+                        description=f"{info['level']}\n{info['class_world']}")
 
-    embed.set_author(name="MSBot")
+    embed.set_author(name="LotusBot")
 
     exp = info['exp_1']
     embed.add_field(name="Average Daily Exp",
                     value=f"{exp}",
                     inline=False)
-    print(info['url'])
+
     embed.set_thumbnail(url=info['url'])
 
     await ctx.send(embed=embed)
