@@ -105,7 +105,7 @@ data = """
 
 # Split each line into a list of values
 data = [line.split('\t') for line in data]
-
+print(data)
 # Write data to CSV file
 with open('level_exp.csv', 'w', newline='') as file:
     writer = csv.writer(file)

@@ -1,5 +1,4 @@
 import pandas as pd
-import maple_ranks
 
 df = pd.read_csv('level_exp.csv')
 
@@ -44,61 +43,32 @@ def calculate_curr_exp_value(total_exp, exp):
     return total_exp - (total_exp * exp)
 
 def calculate_days_to_x_level(level, daily_exp, curr_exp_percentage, goal):
-    
     # Dictionary storing the Days : Level
     days_to_level_dic = {}
-
+    
     # First iteration requires to calculate current player exp relative to their level
     total_exp_to_next_level = df.loc[df['Level'] == level, 'EXP to Next Level'].values[0]
     curr_exp = calculate_curr_exp_value(total_exp_to_next_level, curr_exp_percentage)
     days = curr_exp / daily_exp
 
-    days_to_level_dic[days] = level
-    # print('{:.1f} Days to {:d}'.format(days, level))
+    days_to_level_dic[0] = [level + 1, round(float(days), 1)]
+    
 
     total_exp = curr_exp
 
+    # Loop and add to dictionary with format:
+    #   Key   -> Integer Value: 
+    #   Value -> A List containing [Level, Days]
+    key = 0
     for i in range(level + 1, level + (goal - level)):
+        
+        # Increment the Integer value
+        key = key + 1
+
         temp_exp = df.loc[df['Level'] == i, 'EXP to Next Level'].values[0]
         total_exp = total_exp + temp_exp
 
         days = total_exp / daily_exp
-        days_to_level_dic[days] = i + 1
-        # print('{:.1f} Days to {:d}'.format(days, i+1))
+        days_to_level_dic[key] = [i + 1, round(float(days), 1)]
     
     return days_to_level_dic
-
-def main():
-
-    # Get the data
-    info = maple_ranks.get_info('Entyprise')
-
-    # Obtain their level, exp
-    _, level, exp = info['level'].split()
-    curr_exp_percentage = exp.strip('()')
-
-    # Obtain daily exp
-    daily_exp = info['exp_1']
-    base = expand_number(daily_exp)
-    daily_exp = float(daily_exp[:-1]) * base
-
-    test = calculate_days_to_x_level(int(level), daily_exp, curr_exp_percentage, 290)
-    print(test)
-    # # First iteration requires to calculate current player exp relative to their level
-    # total_exp_to_next_level = df.loc[df['Level'] == int(level), 'EXP to Next Level'].values[0]
-    # curr_exp = calculate_curr_exp_value(total_exp_to_next_level, curr_exp_percentage)
-    # exp = curr_exp
-
-    # # Test Loop for 282 -> 285
-    # for i in range(int(level) + 1, int(level) + 3):
-    #     # currExp + 283 exp to level + 284 exp to level
-    #     temp_exp = df.loc[df['Level'] == i, 'EXP to Next Level'].values[0]
-    #     exp = exp + temp_exp
-
-    #     exp_to_goal = exp / daily_exp
-    #     print('{:.1f} Days to {:d}'.format(exp_to_goal, i+1))
-
-
-
-if __name__ == "__main__":
-    main()
