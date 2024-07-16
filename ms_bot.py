@@ -1,8 +1,12 @@
 import maple_ranks
 import exp_calculations
 import discord
+import culvert_score
 from os import environ
 from discord.ext import commands
+import numpy as np
+import cv2
+import aiohttp
 
 # Globals
 MAX_LEVEL = 300
@@ -16,7 +20,7 @@ async def on_ready():
     print(f'Connected to server')
     print('---------------------')
 
-@client.command(name='xp')
+@client.command(name='msr')
 async def exp(ctx, name):
     '''
     Command to grab player's daily exp and day to level
@@ -78,7 +82,7 @@ async def exp(ctx, name):
 
     await ctx.send(embed=embed)
 
-@client.command(name='xpto')
+@client.command(name='msrg')
 async def exp(ctx, name, goal):
     '''
     Command to grab player's daily exp and day to level that they specified
@@ -146,5 +150,28 @@ async def exp(ctx, name, goal):
 
     await ctx.send(embed=embed)
 
+@client.command(name='guildimg')
+async def guildimg(ctx):
+    '''
+    How to use:
+        #guildimg <img>
+        The program will extract the image for data.
+        Ensure that the image contains data from Name -> GPQ Score.
 
+        Please make sure to fix any errors within data extraction and compile a txt file containing the entirety of the guild
+    '''
+    if ctx.message.attachments and any(att.filename.endswith(('.png', '.jpg', '.jpeg')) for att in ctx.message.attachments):
+        # Loop through all attachments
+        for attachment in ctx.message.attachments:
+            # Download the attachment
+            async with aiohttp.ClientSession() as session:
+                async with session.get(attachment.url) as resp:
+                    image_bytes = await resp.read()
+            print('Received image:', len(image_bytes), 'bytes')
+            nparr = np.frombuffer(image_bytes, np.uint8)
+            image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            s = culvert_score.get_data(image)
+            await ctx.send(f'```{s}```')
+            # for data in data_dic:
+            #     await ctx.send(f"Name: {data['name']}, Class: {data['class']}, Level: {data['level']}, Score: {data['score']}")
 client.run(token)
