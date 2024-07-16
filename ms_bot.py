@@ -7,6 +7,9 @@ from discord.ext import commands
 import numpy as np
 import cv2
 import aiohttp
+import re
+import csv
+import pandas as pd
 
 # Globals
 MAX_LEVEL = 300
@@ -150,11 +153,11 @@ async def exp(ctx, name, goal):
 
     await ctx.send(embed=embed)
 
-@client.command(name='guildimg')
-async def guildimg(ctx):
+@client.command(name='img')
+async def img(ctx):
     '''
     How to use:
-        #guildimg <img>
+        #img <img>
         The program will extract the image for data.
         Ensure that the image contains data from Name -> GPQ Score.
 
@@ -174,4 +177,64 @@ async def guildimg(ctx):
             await ctx.send(f'```{s}```')
             # for data in data_dic:
             #     await ctx.send(f"Name: {data['name']}, Class: {data['class']}, Level: {data['level']}, Score: {data['score']}")
+
+@client.command(name='guild')
+async def guild(ctx):
+    result = []
+    if ctx.message.attachments and any(att.filename.endswith('.txt') for att in ctx.message.attachments):
+        for attachment in ctx.message.attachments:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(attachment.url) as resp:
+                    text = await resp.text()
+    lines = text.strip().split('\n')
+    for line in lines:
+        match = re.search(r'(\w+)\s+(\w+(?: \w+)*)\s+(\d+)\s+(\w+)\s+(\d+)\s+(\d+)', line)
+        if match:
+            name, player_class, level, score = match.groups()[:3] + match.groups()[5:]
+            result.append({
+                'Name': name,
+                'Class': player_class,
+                'Level': level,
+                'GPQ': score
+            })
+    fields = ['Name', 'Class', 'Level', 'GPQ']
+    filename = 'guild.csv'
+    with open(filename, 'w') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=fields)
+        writer.writeheader()
+        writer.writerows(result)
+
+    # Read the csv
+    csv_file = pd.read_csv('guild.csv')
+    # Save as xlsx file
+    csv_file.to_excel('guild.xlsx', sheet_name='Guild', index=False)
+    file = discord.File('guild.xlsx')
+    await ctx.send(file=file)
+
+@client.command(name='guildxp')
+async def guildxp(ctx):
+    if ctx.message.attachments and any(att.filename.endswith('.xlsx') for att in ctx.message.attachments):
+        # Loop through all attachments
+        for attachment in ctx.message.attachments:
+            # Download the attachment
+            async with aiohttp.ClientSession() as session:
+                async with session.get(attachment.url) as resp:
+                    if resp.status != 200:
+                        return await ctx.send('Could not download file...')
+                    data = await resp.read()
+                    with open(attachment.filename, 'wb') as f:
+                        f.write(data)
+            # Now you can use pandas to read the file
+            file = pd.read_excel(attachment.filename)
+            if '7 Day Avg. Exp' not in file.columns:
+                file['7 Day Avg. Exp'] = ''
+            file['7 Day Avg. Exp'] = file['7 Day Avg. Exp'].astype(str)
+            for name in file['Name']:
+                val = maple_ranks.get_xp(name)
+                file.loc[file['Name'] == name, '7 Day Avg. Exp'] += val
+            print(file)
+        file.to_excel('guild.xlsx', index=False)
+        file = discord.File('guild.xlsx')
+        await ctx.send(file=file)
+
 client.run(token)

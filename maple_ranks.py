@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import requests
+import time
 
 def get_info(character_name):
     """
@@ -14,7 +15,6 @@ def get_info(character_name):
     # Opens Page
     url = f'https://www.mapleranks.com/u/{character_name}'
     response = requests.get(url)
-
     soup = BeautifulSoup(response.content, 'html.parser')
 
     # Empty dictionary for information
@@ -47,3 +47,28 @@ def get_info(character_name):
     character_info['exp_1'] = words[-1]
 
     return character_info
+
+def get_xp(name):
+    # Opens Page
+    url = f'https://www.mapleranks.com/u/{name}'
+    max_retries = 5
+    retries = 0
+
+    while retries < max_retries:
+        try:
+            response = requests.get(url)
+            soup = BeautifulSoup(response.content, 'html.parser')
+
+            exp_items = soup.find_all('div', class_='char-exp-cell')
+            first_exp_value = exp_items[0].text.strip()
+            words = first_exp_value.split()
+            val = words[-1]
+            return val
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            retries += 1
+            print(f"Retry {retries} of {max_retries}")
+            time.sleep(5)  # Wait for 5 seconds before retrying
+
+    print("Failed to load the page after maximum retries")
+    return None
